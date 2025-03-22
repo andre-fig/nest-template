@@ -1,12 +1,12 @@
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { Module } from '@nestjs/common';
-import { ProposalsModule } from './proposals/proposals.module';
 import { ConfigModule } from '@nestjs/config';
 import { DatabasesModule } from './databases/databases.module';
 
 import { BullmqModule } from './bullmq/bullmq.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -15,8 +15,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     ScheduleModule.forRoot(),
     DatabasesModule,
-    ProposalsModule,
     BullmqModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

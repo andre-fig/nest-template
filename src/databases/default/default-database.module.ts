@@ -3,8 +3,11 @@ import { TypeOrmModule, getDataSourceToken } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { DatabaseEnum } from '../../shared/enums/database.enum';
-import { ProposalEntity } from './entities/proposal.entity';
 import { createTypeOrmOptions } from '../factories/typeorm-config.factory';
+import { User } from 'src/users/entities/user.entity';
+
+const database = DatabaseEnum.DEFAULT;
+const entities = [User];
 
 @Module({
   imports: [
@@ -13,31 +16,24 @@ import { createTypeOrmOptions } from '../factories/typeorm-config.factory';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) =>
-        createTypeOrmOptions(configService, DatabaseEnum.DEFAULT, [
-          ProposalEntity,
-        ]),
+        createTypeOrmOptions(configService, database, entities),
     }),
-    TypeOrmModule.forFeature([ProposalEntity], DatabaseEnum.DEFAULT),
+    TypeOrmModule.forFeature(entities, database),
   ],
   providers: [
     {
-      provide: getDataSourceToken(DatabaseEnum.DEFAULT),
+      provide: getDataSourceToken(database),
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const options = createTypeOrmOptions(
-          configService,
-          DatabaseEnum.DEFAULT,
-          [ProposalEntity],
-        );
+        const options = createTypeOrmOptions(configService, database, entities);
 
         const dataSource = new DataSource(options);
-
         await dataSource.initialize();
 
         return dataSource;
       },
     },
   ],
-  exports: [TypeOrmModule, getDataSourceToken(DatabaseEnum.DEFAULT)],
+  exports: [TypeOrmModule, getDataSourceToken(database)],
 })
 export class DefaultDatabaseModule {}
