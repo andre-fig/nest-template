@@ -4,7 +4,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabasesModule } from './databases/databases.module';
 
-import { BullmqModule } from './bullmq/bullmq.module';
+// import { BullmqModule } from './bullmq/bullmq.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UsersModule } from './users/users.module';
 
@@ -15,7 +15,7 @@ import { UsersModule } from './users/users.module';
     }),
     ScheduleModule.forRoot(),
     DatabasesModule,
-    BullmqModule,
+    // BullmqModule,
     UsersModule,
   ],
   controllers: [AppController],
