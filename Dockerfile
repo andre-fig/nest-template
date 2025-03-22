@@ -23,6 +23,4 @@ COPY --from=build /app/dist /app/dist
 
 EXPOSE 3000
 
-ENV NODE_OPTIONS="--require @opentelemetry/auto-instrumentations-node/register"
-
 CMD ["node", "dist/main.js"]
