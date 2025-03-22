@@ -7,6 +7,7 @@ import { DatabasesModule } from './databases/databases.module';
 // import { BullmqModule } from './bullmq/bullmq.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UsersModule } from './users/users.module';
     DatabasesModule,
     // BullmqModule,
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
