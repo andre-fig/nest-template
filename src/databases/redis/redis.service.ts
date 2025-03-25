@@ -20,11 +20,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleInit() {
-    this.logger.log('Redis dependencies initialized');
+    this.logger.log('[INIT] Redis dependencies initialized');
   }
 
   onModuleDestroy() {
-    this.logger.warn('Closing Redis connection...');
+    this.logger.warn('[CLEANUP] Closing Redis connection...');
     this.client.disconnect();
   }
 

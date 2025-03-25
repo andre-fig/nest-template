@@ -1,15 +1,20 @@
 import {
+  Body,
   Controller,
   Post,
-  Body,
   UseInterceptors,
   ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+
 import { AuthService } from './auth.service';
-import { User } from './entities/user.entity';
 import { CreateUserDto } from './dtos/create-user.dto';
+import { ActivateUserResponseDto } from './dtos/activate-user-response.dto';
+import { User } from 'src/users/entities/user.entity';
+import { AuthTokenDto } from './dtos/auth-token.dto';
 import { LoginUserDto } from './dtos/login-user.dto';
+import { ActivateUserDto } from './dtos/activate-user.dto';
+import { RefreshTokenDto } from './dtos/refresh-token.dto';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Auth')
@@ -19,47 +24,37 @@ export class AuthController {
 
   @Post('signup')
   @ApiOperation({ summary: 'Sign up a new user' })
-  @ApiResponse({
-    status: 201,
-    description: 'User successfully registered.',
-    type: User,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid input data.',
-  })
+  @ApiResponse({ status: 201, type: User })
+  @ApiResponse({ status: 400, description: 'Invalid input data.' })
   public async signup(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return await this.authService.registerUser(
-      createUserDto.email,
-      createUserDto.password,
-    );
+    return this.authService.registerUser(createUserDto);
   }
 
   @Post('login')
   @ApiOperation({ summary: 'Log in an existing user' })
-  @ApiResponse({
-    status: 200,
-    description: 'User successfully authenticated.',
-    schema: {
-      example: {
-        access_token: {
-          sub: '1234567890',
-          exp: 1699999999,
-        },
-        token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
-      },
-    },
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid credentials.',
-  })
-  public async login(@Body() loginUserDto: LoginUserDto): Promise<{
-    access_token: string;
-  }> {
-    return await this.authService.authenticateUser(
-      loginUserDto.email,
-      loginUserDto.password,
-    );
+  @ApiResponse({ status: 200, type: AuthTokenDto })
+  @ApiResponse({ status: 401, description: 'Invalid credentials.' })
+  public async login(@Body() loginDto: LoginUserDto): Promise<AuthTokenDto> {
+    return this.authService.authenticateUser(loginDto);
+  }
+
+  @Post('activate')
+  @ApiOperation({ summary: 'Activate a user account with confirmation token' })
+  @ApiResponse({ status: 200, type: ActivateUserResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid token or CPF.' })
+  public async activate(
+    @Body() activateDto: ActivateUserDto,
+  ): Promise<ActivateUserResponseDto> {
+    return this.authService.activateUser(activateDto);
+  }
+
+  @Post('refresh-token')
+  @ApiOperation({ summary: 'Refresh access token using a valid refresh token' })
+  @ApiResponse({ status: 200, type: AuthTokenDto })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
+  async refreshAccessToken(
+    @Body() dto: RefreshTokenDto,
+  ): Promise<AuthTokenDto> {
+    return this.authService.refreshAccessToken(dto.refreshToken);
   }
 }

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 import { CreateUserDto } from '../dtos/create-user.dto';
-import { LoginUserDto } from '../dtos/login-user.dto';
+import { LoginUserDto } from '../dtos/activate-user.dto';
 import { User } from '../entities/user.entity';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 

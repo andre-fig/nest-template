@@ -4,10 +4,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { DatabaseEnum } from '../../shared/enums/database.enum';
 import { createTypeOrmOptions } from '../factories/typeorm-config.factory';
-import { User } from 'src/users/entities/user.entity';
+import { entityMap } from '../entity.map';
 
 const database = DatabaseEnum.DEFAULT;
-const entities = [User];
+const entities = entityMap[database];
 
 @Module({
   imports: [
