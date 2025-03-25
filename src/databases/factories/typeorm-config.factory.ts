@@ -7,6 +7,7 @@ export const createTypeOrmOptions = (
   entities: any[],
 ): DataSourceOptions => {
   const upperDatabaseName = databaseName.toUpperCase();
+  const NODE_ENV = configService.get<string>('NODE_ENV', 'development');
 
   return {
     type: 'postgres',
@@ -29,6 +30,12 @@ export const createTypeOrmOptions = (
       'default_db',
     ),
     entities,
+    migrations: [
+      NODE_ENV === 'development'
+        ? `src/databases/${databaseName}/migrations/*{.ts}`
+        : `dist/databases/${databaseName}/migrations/*{.js}`,
+    ],
+    migrationsRun: true,
     synchronize: false,
     ssl:
       configService.get<string>(`DB_${upperDatabaseName}_SSL`) === 'true'

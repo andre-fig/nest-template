@@ -1,3 +1,3 @@
 export enum QueueEnum {
-  PROPOSALS = 'proposals',
+  DISPATCHER = 'dispatcher',
 }

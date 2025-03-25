@@ -6,7 +6,7 @@ import { DatabaseEnum } from '../../shared/enums/database.enum';
 import { createTypeOrmOptions } from '../factories/typeorm-config.factory';
 import { entityMap } from '../entity.map';
 
-const database = DatabaseEnum.DEFAULT;
+const database = DatabaseEnum.POSTGRES;
 const entities = entityMap[database];
 
 @Module({
@@ -36,4 +36,4 @@ const entities = entityMap[database];
   ],
   exports: [TypeOrmModule, getDataSourceToken(database)],
 })
-export class DefaultDatabaseModule {}
+export class PostgresDatabaseModule {}

@@ -10,7 +10,10 @@ export class ActivateUserDto {
   @Matches(/^\d{11}$/, { message: 'CPF must be 11 digits' })
   cpf: string;
 
-  @ApiProperty({ example: 'ABC123', description: 'Activation code received' })
+  @ApiProperty({
+    example: 'ABC123',
+    description: 'Token received via SMS, email or WhatsApp',
+  })
   @IsString()
   @IsNotEmpty()
   token: string;

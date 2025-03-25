@@ -11,22 +11,34 @@ import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { ActivateUserDto } from './dtos/activate-user.dto';
 import { LoginUserDto } from './dtos/login-user.dto';
-import { ActivateUserResponseDto } from './dtos/activate-user-response.dto';
 import { AuthTokenDto } from './dtos/auth-token.dto';
-import { User } from 'src/users/entities/user.entity';
+import { UserEntity } from 'src/users/entities/user.entity';
+import { DatabaseEnum } from 'src/shared/enums/database.enum';
+import { QueueEnum } from 'src/shared/enums/queue.enum';
+import { DispatchMessageDto } from 'src/dispatcher/dtos/dispatch-message.dto';
+import { ChannelEnum } from 'src/shared/enums/channel.enum';
+import { BullmqService } from 'src/bullmq/bullmq.service';
+import { RedisService } from 'src/databases/redis/redis.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
+  private static readonly TOKEN_TTL_SECONDS = 5 * 60;
+  private static readonly ACCESS_TOKEN_EXPIRES_IN = 15 * 60;
+  private static readonly REFRESH_TOKEN_EXPIRES_IN = 7 * 24 * 60 * 60;
+
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(UserEntity, DatabaseEnum.POSTGRES)
+    private readonly userRepository: Repository<UserEntity>,
     private readonly jwtService: JwtService,
+    private readonly redisService: RedisService,
+    private readonly bullService: BullmqService,
+    private readonly configService: ConfigService,
   ) {}
 
-  public async registerUser(dto: CreateUserDto): Promise<User> {
-    const existing = await this.userRepository.findOne({
+  public async registerUser(dto: CreateUserDto): Promise<UserEntity> {
+    const existing = await this.userRepository.exists({
       where: { cpf: dto.cpf },
-      withDeleted: true,
     });
 
     if (existing) {
@@ -34,7 +46,6 @@ export class AuthService {
     }
 
     const user = this.userRepository.create({
-      fullName: dto.fullName,
       birthDate: dto.birthDate,
       email: dto.email,
       phone: dto.phone,
@@ -44,7 +55,25 @@ export class AuthService {
 
     const saved = await this.userRepository.save(user);
 
-    // TODO: enviar token de verificação via fila Bull
+    const token = await this.generateUniqueToken();
+
+    await this.redisService.set(
+      this.getTokenKey(token),
+      { userId: saved.id },
+      AuthService.TOKEN_TTL_SECONDS,
+    );
+
+    await this.bullService.addJob<DispatchMessageDto>(
+      QueueEnum.DISPATCHER,
+      this.registerUser.name,
+      {
+        channel: dto.confirmationMethod,
+        recipient:
+          dto.confirmationMethod === ChannelEnum.EMAIL ? dto.email : dto.phone,
+        payload: { body: token },
+      },
+    );
+
     return saved;
   }
 
@@ -57,71 +86,48 @@ export class AuthService {
       throw new UnauthorizedException('User not found or not validated');
     }
 
-    // TODO: validar token recebido por SMS/email/WhatsApp
-    const isTokenValid = dto.token === '123456'; // Simulação temporária
+    const tokenKey = this.getTokenKey(dto.token);
+
+    const tokenData = await this.redisService.get<{ userId: string }>(tokenKey);
+
+    const isTokenValid = tokenData?.userId === user.id;
 
     if (!isTokenValid) {
       throw new UnauthorizedException('Invalid token');
     }
 
-    const payload = { sub: user.id.toString() };
+    await this.redisService.del(tokenKey);
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_ACCESS_SECRET,
-      expiresIn: '15m',
-    });
-
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: '7d',
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-      expiresIn: 15 * 60,
-    };
+    return this.generateAuthTokens(user.id.toString());
   }
 
-  public async activateUser(
-    dto: ActivateUserDto,
-  ): Promise<ActivateUserResponseDto> {
-    const user = await this.userRepository.findOne({ where: { cpf: dto.cpf } });
+  public async activateUser(dto: ActivateUserDto): Promise<AuthTokenDto> {
+    const user = await this.userRepository.findOne({
+      where: { cpf: dto.cpf, isValidated: false },
+    });
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException('User not found or already validated');
     }
 
-    // TODO: validar token real enviado para ativação
-    const isTokenValid = true;
+    const tokenKey = this.getTokenKey(dto.token);
+    const tokenData = await this.redisService.get<{ userId: string }>(tokenKey);
+
+    const isTokenValid = tokenData?.userId === user.id;
 
     if (!isTokenValid) {
       throw new BadRequestException('Invalid or expired token.');
     }
 
+    await this.redisService.del(tokenKey);
+
     user.isValidated = true;
     await this.userRepository.save(user);
 
-    const payload = { sub: user.id.toString() };
-
-    const accessToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_ACCESS_SECRET,
-      expiresIn: '15m',
-    });
-
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: '7d',
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-      success: true,
-    };
+    return this.generateAuthTokens(user.id.toString());
   }
 
-  public async validateUserById(id: number): Promise<User | null> {
+  public async validateUserById(id: string): Promise<UserEntity | null> {
     return await this.userRepository.findOne({
       where: { id, isValidated: true },
     });
@@ -130,35 +136,15 @@ export class AuthService {
   public async refreshAccessToken(refreshToken: string): Promise<AuthTokenDto> {
     try {
       const payload: { sub: string } = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET,
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
 
-      const user = await this.validateUserById(+payload.sub);
+      const user = await this.validateUserById(payload.sub);
       if (!user) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      const newAccessToken = this.jwtService.sign(
-        { sub: user.id.toString() },
-        {
-          secret: process.env.JWT_ACCESS_SECRET,
-          expiresIn: '15m',
-        },
-      );
-
-      const newRefreshToken = this.jwtService.sign(
-        { sub: user.id.toString() },
-        {
-          secret: process.env.JWT_REFRESH_SECRET,
-          expiresIn: '7d',
-        },
-      );
-
-      return {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-        expiresIn: 15 * 60,
-      };
+      return this.generateAuthTokens(user.id.toString());
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw new UnauthorizedException(error.message);
@@ -166,5 +152,48 @@ export class AuthService {
 
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
+  }
+
+  private generateAuthTokens(userId: string): AuthTokenDto {
+    const payload = { sub: userId };
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+      expiresIn: AuthService.ACCESS_TOKEN_EXPIRES_IN,
+    });
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      expiresIn: AuthService.REFRESH_TOKEN_EXPIRES_IN,
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn: AuthService.ACCESS_TOKEN_EXPIRES_IN,
+    };
+  }
+
+  private async generateUniqueToken(): Promise<string> {
+    let token: string;
+    let exists: boolean;
+
+    do {
+      token = this.generateRandomToken();
+      exists = await this.redisService.exists(this.getTokenKey(token));
+    } while (exists);
+
+    return token;
+  }
+
+  private generateRandomToken(): string {
+    const randomSixDigitToken = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+    return randomSixDigitToken;
+  }
+
+  private getTokenKey(token: string): string {
+    return `user:token:${token}`;
   }
 }

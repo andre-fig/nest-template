@@ -1,3 +1,3 @@
 export enum DatabaseEnum {
-  DEFAULT = 'default',
+  POSTGRES = 'postgres',
 }

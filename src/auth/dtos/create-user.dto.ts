@@ -7,7 +7,7 @@ import {
   Matches,
   IsEnum,
 } from 'class-validator';
-import { ConfirmationMethodEnum } from '../enums/confirmation-method.enum';
+import { ChannelEnum } from 'src/shared/enums/channel.enum';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -18,16 +18,12 @@ export class CreateUserDto {
   @Matches(/^\d{11}$/, { message: 'CPF must be 11 digits' })
   cpf: string;
 
-  @ApiProperty({ example: 'John Doe' })
-  @IsString()
-  @IsNotEmpty()
-  fullName: string;
-
   @ApiProperty({
     example: '1990-01-01',
     description: 'Birth date (YYYY-MM-DD)',
   })
   @IsDateString()
+  @IsNotEmpty()
   birthDate: Date;
 
   @ApiProperty({ example: 'john.doe@example.com' })
@@ -43,10 +39,10 @@ export class CreateUserDto {
   phone: string;
 
   @ApiProperty({
-    example: ConfirmationMethodEnum.SMS,
-    enum: ConfirmationMethodEnum,
+    example: ChannelEnum.SMS,
+    enum: ChannelEnum,
     description: 'Confirmation method to send token',
   })
-  @IsEnum(ConfirmationMethodEnum)
-  confirmationMethod: ConfirmationMethodEnum;
+  @IsEnum(ChannelEnum)
+  confirmationMethod: ChannelEnum;
 }

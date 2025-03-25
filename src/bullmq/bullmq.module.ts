@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { QueueEnum } from '../shared/enums/queue.enum';
+import { BullmqService } from './bullmq.service';
 
 @Global()
 @Module({
@@ -22,6 +23,7 @@ import { QueueEnum } from '../shared/enums/queue.enum';
       })),
     ),
   ],
-  exports: [BullModule],
+  providers: [BullmqService],
+  exports: [BullModule, BullmqService],
 })
 export class BullmqModule {}

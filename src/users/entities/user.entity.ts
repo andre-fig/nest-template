@@ -9,23 +9,20 @@ import {
 } from 'typeorm';
 
 @Entity('users')
-export class User {
-  @PrimaryGeneratedColumn('increment')
-  id: number;
+export class UserEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column({ name: 'name' })
-  name: string;
-
-  @Column({ name: 'full_name' })
-  fullName: string;
+  @Column({ name: 'full_name', nullable: true })
+  fullName?: string;
 
   @Column({ name: 'birth_date', type: 'date' })
   birthDate: Date;
 
-  @Column()
+  @Column({ nullable: true })
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   phone: string;
 
   @Column()

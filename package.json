@@ -23,9 +23,9 @@
     "dev:db:rebuild": "docker compose --env-file .env.local up --build --remove-orphans",
     "dev:db:stop": "docker compose down",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-    "migrations:run": "npm run build && npm run typeorm migration:run -- -d ./dist/databases/default/default-database.datasource.js",
-    "migrations:revert": "npm run build && npm run typeorm migration:revert -- -d ./dist/databases/default/default-database.datasource.js",
-    "migrations:generate": "npm run build && npm run typeorm migration:generate -- -d ./dist/databases/default/default-database.datasource.js"
+    "migrations:run": "npm run build && npm run typeorm migration:run -- -d ./dist/databases/postgres/postgres-database.datasource.js",
+    "migrations:revert": "npm run build && npm run typeorm migration:revert -- -d ./dist/databases/postgres/postgres-database.datasource.js",
+    "migrations:generate": "npm run build && npm run typeorm migration:generate -- -d ./dist/databases/postgres/postgres-database.datasource.js"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.774.0",
@@ -48,9 +48,10 @@
     "@opentelemetry/sdk-node": "^0.57.2",
     "@types/cron": "^2.0.1",
     "bcrypt": "^5.1.1",
-    "bullmq": "^5.40.4",
+    "bullmq": "^5.44.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "elastic-apm-node": "^4.11.0",
     "install": "^0.13.0",

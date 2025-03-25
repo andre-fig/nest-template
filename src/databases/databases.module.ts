@@ -1,16 +1,10 @@
 import { Global, Module } from '@nestjs/common';
-import { DefaultDatabaseModule } from './default/default-database.module';
-// import { RedisModule } from './redis/redis.module';
+import { PostgresDatabaseModule } from './postgres/postgres-database.module';
+import { RedisModule } from './redis/redis.module';
 
 @Global()
 @Module({
-  imports: [
-    DefaultDatabaseModule,
-    // RedisModule
-  ],
-  exports: [
-    DefaultDatabaseModule,
-    // RedisModule
-  ],
+  imports: [PostgresDatabaseModule, RedisModule],
+  exports: [PostgresDatabaseModule, RedisModule],
 })
 export class DatabasesModule {}

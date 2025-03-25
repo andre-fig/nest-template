@@ -4,10 +4,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabasesModule } from './databases/databases.module';
 
-// import { BullmqModule } from './bullmq/bullmq.module';
+import { BullmqModule } from './bullmq/bullmq.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { DispatcherModule } from './dispatcher/dispatcher.module';
 
 @Module({
   imports: [
@@ -16,9 +17,10 @@ import { AuthModule } from './auth/auth.module';
     }),
     ScheduleModule.forRoot(),
     DatabasesModule,
-    // BullmqModule,
+    BullmqModule,
     UsersModule,
     AuthModule,
+    DispatcherModule,
   ],
   controllers: [AppController],
   providers: [AppService],

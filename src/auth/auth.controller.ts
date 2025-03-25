@@ -9,8 +9,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dtos/create-user.dto';
-import { ActivateUserResponseDto } from './dtos/activate-user-response.dto';
-import { User } from 'src/users/entities/user.entity';
+import { UserEntity } from 'src/users/entities/user.entity';
 import { AuthTokenDto } from './dtos/auth-token.dto';
 import { LoginUserDto } from './dtos/login-user.dto';
 import { ActivateUserDto } from './dtos/activate-user.dto';
@@ -24,9 +23,11 @@ export class AuthController {
 
   @Post('signup')
   @ApiOperation({ summary: 'Sign up a new user' })
-  @ApiResponse({ status: 201, type: User })
+  @ApiResponse({ status: 201, type: UserEntity })
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
-  public async signup(@Body() createUserDto: CreateUserDto): Promise<User> {
+  public async signup(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<UserEntity> {
     return this.authService.registerUser(createUserDto);
   }
 
@@ -40,11 +41,11 @@ export class AuthController {
 
   @Post('activate')
   @ApiOperation({ summary: 'Activate a user account with confirmation token' })
-  @ApiResponse({ status: 200, type: ActivateUserResponseDto })
+  @ApiResponse({ status: 200, type: AuthTokenDto })
   @ApiResponse({ status: 400, description: 'Invalid token or CPF.' })
   public async activate(
     @Body() activateDto: ActivateUserDto,
-  ): Promise<ActivateUserResponseDto> {
+  ): Promise<AuthTokenDto> {
     return this.authService.activateUser(activateDto);
   }
 

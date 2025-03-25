@@ -8,7 +8,7 @@ import { entityMap } from '../entity.map';
 loadEnv();
 const configService = new ConfigService();
 
-const database = DatabaseEnum.DEFAULT;
+const database = DatabaseEnum.POSTGRES;
 const entities = entityMap[database];
 
 const dataSourceOptions = createTypeOrmOptions(
