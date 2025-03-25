@@ -5,12 +5,11 @@ import { createTypeOrmOptions } from '../factories/typeorm-config.factory';
 import { DatabaseEnum } from 'src/shared/enums/database.enum';
 import { entityMap } from '../entity.map';
 
+loadEnv();
+const configService = new ConfigService();
+
 const database = DatabaseEnum.DEFAULT;
 const entities = entityMap[database];
-
-loadEnv();
-
-const configService = new ConfigService();
 
 const dataSourceOptions = createTypeOrmOptions(
   configService,

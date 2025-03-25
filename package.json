@@ -1,5 +1,5 @@
 {
-  "name": "teddy-consignado-worker-process",
+  "name": "nestjs-project",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -22,9 +22,10 @@
     "dev:db": "docker compose --env-file .env.local up -d",
     "dev:db:rebuild": "docker compose --env-file .env.local up --build --remove-orphans",
     "dev:db:stop": "docker compose down",
-    "migrations:run": "npm run build && npm run typeorm migration:run -- -d ./dist/databases/default-database.datasource.js",
-    "migrations:revert": "npm run build && npm run typeorm migration:revert -- -d ./dist/databases/default-database.datasource.js",
-    "migrations:generate": "npm run build && npm run typeorm migration:generate -- -d ./dist/databases/default-database.datasource.js"
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "migrations:run": "npm run build && npm run typeorm migration:run -- -d ./dist/databases/default/default-database.datasource.js",
+    "migrations:revert": "npm run build && npm run typeorm migration:revert -- -d ./dist/databases/default/default-database.datasource.js",
+    "migrations:generate": "npm run build && npm run typeorm migration:generate -- -d ./dist/databases/default/default-database.datasource.js"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.774.0",
